@@ -4,6 +4,7 @@ use bevy::math::*;
 use bevy_inspector_egui::{Inspectable, RegisterInspectable, egui::util::cache::CacheTrait};
 use enum_iterator::IntoEnumIterator;
 use self::Direction::*;
+use noise::{OpenSimplex, NoiseFn, Perlin};
 
 pub struct PlanetPlugin;
 
@@ -16,7 +17,7 @@ impl Plugin for PlanetPlugin {
     }
 }
 
-fn planet_update_system(mut meshes: ResMut<Assets<Mesh>>, mut query: Query<(Entity, &Planet, &Handle<Mesh>), Changed<Planet>>) {
+fn planet_update_system(mut meshes: ResMut<Assets<Mesh>>, query: Query<(Entity, &Planet, &Handle<Mesh>), Changed<Planet>>) {
     for (entity, planet, mesh_h) in query.iter() {
         if let Some(mesh) = meshes.get_mut(mesh_h) {
             planet.update(mesh);
@@ -60,6 +61,7 @@ impl Direction {
 
 impl Planet {
     fn update(&self, mesh: &mut Mesh) {
+        let noise = OpenSimplex::new();
         let resolution = self.resolution.clone() as i64;
         let radius = &self.radius;
         let mut positions = Vec::new();
@@ -67,7 +69,7 @@ impl Planet {
         let mut uvs = Vec::new();
         let mut indices = Vec::new();
         for direction in Direction::into_enum_iter() {
-           add_face(&mut positions, &mut normals,&mut uvs, &mut indices, &resolution, radius, &direction.normal_vector());
+            add_face(&mut positions, &mut normals,&mut uvs, &mut indices, noise, &resolution, radius, &direction.normal_vector());
         }
         mesh.set_indices(Some(Indices::U32(indices)));
         mesh.set_attribute(Mesh::ATTRIBUTE_POSITION, positions);
@@ -88,6 +90,7 @@ fn add_face(positions: &mut Vec<[f32; 3]>
     , normals: &mut Vec<[f32; 3]>
     , uvs: &mut Vec<[f32; 2]>
     , indices: &mut Vec<u32>
+    , noise: impl NoiseFn<[f64; 3]>
     , resolution: &i64
     , length: &f32
     , local_up: &Vec3) {
@@ -100,7 +103,10 @@ fn add_face(positions: &mut Vec<[f32; 3]>
     for b in (-res)..(res + 1) {
         for a in (-res)..(res + 1) {
             let triangle_start = positions.len() as u32;
-            let point = heigth.add(axis_a.mul(a as f32).add(axis_b.mul(b as f32)).mul(sub)).normalize().mul(*length);
+            let point = heigth.add(axis_a.mul(a as f32).add(axis_b.mul(b as f32)).mul(sub)).normalize().mul(*length);//.add(local_up.mul(elevation));
+            let elevation = noise.get([point.x as f64, point.y as f64, point.z as f64]) as f32;
+            let normal = local_up.project_onto(point);
+            let point = point.add(normal.mul(elevation));
             positions.push(point.to_array());
             normals.push(local_up.project_onto(point).to_array());
             //FIXME what do I need here?
@@ -114,6 +120,7 @@ fn add_face(positions: &mut Vec<[f32; 3]>
                 indices.push(triangle_start);
                 indices.push(triangle_start + offset + 2);
                 indices.push(triangle_start + offset + 1);
+
             }
         }
     }

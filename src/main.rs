@@ -59,24 +59,33 @@ fn setup(
 ) {
     wireframe_config.global = false;
 
+    commands.insert_resource(ClearColor(Color::rgb(0., 0., 0.)));
+
     commands.spawn_bundle(PbrBundle {
         mesh: meshes.add(Mesh::from(shape::Plane { size: 30.0 })),
         material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+        visibility: Visibility { is_visible: false },
         ..Default::default()
     });
 
-    let radius = 1.0;
-    let gap = radius * 2.;
+    let radius = 2.0;
+    let resolution = 1;
+    let material_handle = materials.add(StandardMaterial {
+        base_color: Color::rgba(0.4, 0.3, 0.8, 1.),
+        reflectance: 0.,
+        metallic: 0.,
+        ..Default::default()
+    });
 
     commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(Planet { radius: radius, resolution: 3 })),
-        material: materials.add(Color::rgb(0.3, 0.2, 0.9).into()),
+        mesh: meshes.add(Mesh::new(bevy::render::render_resource::PrimitiveTopology::TriangleList)),
+        material: material_handle,
         transform: Transform::from_xyz(0.0, 2., 0.0),
         ..Default::default()
     })
-    .insert(Planet { radius: radius, resolution: 3 })
+    .insert(Planet { radius: radius, resolution: resolution })
     .insert(Rotator { rotate: true })
-    .insert(Wireframed { wireframe: true })
+    .insert(Wireframed { wireframe: false })
     ;
 
     // light
@@ -86,14 +95,14 @@ fn setup(
             shadows_enabled: true,
             ..Default::default()
         },
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
+        transform: Transform::from_xyz(-4.0, 8.0, 4.0),
         ..Default::default()
     });
     // camera
     commands.spawn_bundle(OrbitCameraBundle::new(
         OrbitCameraController::default(),
         PerspectiveCameraBundle::default(),
-        Vec3::new(-5.0, 5.0, 5.0),
+        Vec3::new(-20.0, 5.0, 5.0),
         Vec3::new(0., 0.0, 0.),
     ));
 }
