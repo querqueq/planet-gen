@@ -47,32 +47,9 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     wireframe_config.global = false;
-    // plane
-    /*
 
     commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Plane { size: 30.0 })),
-        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-        ..Default::default()
-    });
-    // sphere
-    let mut planet = Mesh::from(shape::Icosphere { radius: 1.0, subdivisions: 10 });
-    let initial = planet.attribute(Mesh::ATTRIBUTE_POSITION).unwrap().clone();
-
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(planet),
-        material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-        transform: Transform::from_xyz(0.0, 2.5, 0.0),
-        ..Default::default()
-    })
-    .insert(Rotator)
-    //.insert(Wireframe)
-    .insert(Noisify { max: 0.0 })
-    ;
-     */
-
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(Planet { radius: 2.0, resolution: 20 })),
+        mesh: meshes.add(Mesh::from(Planet { radius: 2.0, resolution: 5 })),
         material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
         ..Default::default()
     })
@@ -101,27 +78,5 @@ fn setup(
 fn rotator_system(time: Res<Time>, mut query: Query<&mut Transform, With<Rotator>>) {
     for mut transform in query.iter_mut() {
         transform.rotation *= Quat::from_rotation_y(0.5  * time.delta_seconds());
-    }
-}
-
-//fn noise_system(assets: Res<Assets<Mesh>>, time: Res<Time>, mut query: Query<(&Noisify, &Handle<Mesh>)>) {
-fn noise_system(mut meshes: ResMut<Assets<Mesh>>,
-    mut query: Query<(&Noisify, &Handle<Mesh>), Changed<Noisify>>) {
-    for (Noisify { max }, h) in query.iter() {
-        println!("changed with a noise factor of {:?}", max);
-        if max > &0.0 {
-            if let Some(mesh) = meshes.get_mut(h) {
-                if let Some(VertexAttributeValues::Float32x3(initial)) = mesh.attribute_mut("INIT_POSITION") {
-                    let new_pos = initial.iter()
-                    .map(|[x,y,z]| {
-                        [x.clone() 
-                        ,y.clone()
-                        ,z.clone()]
-                    })
-                    .collect::<Vec<[f32; 3]>>();
-                    //mesh.set_attribute(Mesh::ATTRIBUTE_POSITION, new_pos);
-                }
-            }
-        }
     }
 }

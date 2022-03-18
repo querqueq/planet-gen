@@ -72,7 +72,7 @@ fn add_face(positions: &mut Vec<[f32; 3]>
         for sub_a in (-res)..(res + 1) {
             let a = sub * sub_a as f32;
             let triangle_start = positions.len() as u32;
-            let point = height.add(axis_a.mul(a)).add(axis_b.mul(b));
+            let point = height.add(axis_a.mul(a)).add(axis_b.mul(b)).normalize();
             positions.push(point.to_array());
             normals.push(local_up.to_array());
             //FIXME what do I need here?
@@ -87,24 +87,6 @@ fn add_face(positions: &mut Vec<[f32; 3]>
                 indices.push(triangle_start + offset + 2);
                 indices.push(triangle_start + offset + 1);
             }
-
-            /*
-            positions.push([a, 0.0, b]);
-            normals.push([0.0, 1.0, 0.0]);
-            uvs.push([1.0, 1.0]);
-
-            positions.push([a + sub, 0.0, b]);
-            normals.push([0.0, 1.0, 0.0]);
-            uvs.push([1.0, 0.0]);
-            
-            positions.push([a + sub, 0.0, b + sub]);
-            normals.push([0.0, 1.0, 0.0]);
-            uvs.push([0.0, 0.0]);
-
-            positions.push([a, 0.0, b + sub]);
-            normals.push([0.0, 1.0, 0.0]);
-            uvs.push([0.0, 1.0]);
-             */
         }
     }
 }
