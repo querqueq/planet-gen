@@ -72,10 +72,11 @@ fn setup(
      */
 
     commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(Planet { radius: 2.0, resolution: 2 })),
+        mesh: meshes.add(Mesh::from(Planet { radius: 2.0, resolution: 20 })),
         material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
         ..Default::default()
     })
+    .insert(Rotator)
     .insert(Wireframe);
 
     // light
