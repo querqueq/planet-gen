@@ -57,11 +57,12 @@ fn setup(
         ..Default::default()
     });
 
-    let radius = 2.0;
+    let radius = 1.0;
+    let gap = radius * 2.;
     commands.spawn_bundle(PbrBundle {
         mesh: meshes.add(Mesh::from(Planet { radius: radius, resolution: 2 })),
-        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-        transform: Transform::from_xyz(-4.0, 2., -4.0),
+        material: materials.add(Color::rgb(0.8, 0.1, 0.3).into()),
+        transform: Transform::from_xyz(-gap, 2., -gap),
         ..Default::default()
     })
     .insert(Rotator { rotate: true })
@@ -69,7 +70,7 @@ fn setup(
 
     commands.spawn_bundle(PbrBundle {
         mesh: meshes.add(Mesh::from(Planet { radius: radius, resolution: 3 })),
-        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+        material: materials.add(Color::rgb(0.3, 0.2, 0.9).into()),
         transform: Transform::from_xyz(0.0, 2., 0.0),
         ..Default::default()
     })
@@ -78,8 +79,8 @@ fn setup(
 
     commands.spawn_bundle(PbrBundle {
         mesh: meshes.add(Mesh::from(Planet { radius: radius, resolution: 4 })),
-        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-        transform: Transform::from_xyz(4.0, 2., 4.0),
+        material: materials.add(Color::rgb(0.3, 0.7, 0.3).into()),
+        transform: Transform::from_xyz(gap, 2., gap),
         ..Default::default()
     })
     .insert(Rotator { rotate: true })
