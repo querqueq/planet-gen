@@ -1,12 +1,36 @@
 use std::ops::{Add, Mul};
-use bevy::render::{mesh::{Indices, Mesh, VertexAttributeValues}, render_resource::PrimitiveTopology};
+use bevy::{render::{mesh::{Indices, Mesh, VertexAttributeValues, self}, render_resource::PrimitiveTopology}, prelude::*};
 use bevy::math::*;
+use bevy_inspector_egui::{Inspectable, RegisterInspectable, egui::util::cache::CacheTrait};
 use enum_iterator::IntoEnumIterator;
 use self::Direction::*;
 
+pub struct PlanetPlugin;
+
+impl Plugin for PlanetPlugin {
+    fn build(&self, app: &mut bevy::prelude::App) {
+        app
+        .register_inspectable::<Planet>()
+        .add_system(planet_update_system)
+        ;
+    }
+}
+
+fn planet_update_system(mut meshes: ResMut<Assets<Mesh>>, mut query: Query<(Entity, &Planet, &Handle<Mesh>), Changed<Planet>>) {
+    for (entity, planet, mesh_h) in query.iter() {
+        if let Some(mesh) = meshes.get_mut(mesh_h) {
+            planet.update(mesh);
+        } else {
+            println!("Missing mesh for planet {:?}", entity);
+        }
+    }
+}
+
+#[derive(Component, Inspectable)]
 pub struct Planet {
-    /// The radius of the sphere.
+    #[inspectable(min = 0.1)]
     pub radius: f32,
+    #[inspectable(min = 1)]
     pub resolution: u32,
 }
 
@@ -34,10 +58,10 @@ impl Direction {
     }
 }
 
-impl From<Planet> for Mesh {
-    fn from(planet: Planet) -> Self {
-        let resolution = planet.resolution.clone() as i64;
-        let radius = &planet.radius;
+impl Planet {
+    fn update(&self, mesh: &mut Mesh) {
+        let resolution = self.resolution.clone() as i64;
+        let radius = &self.radius;
         let mut positions = Vec::new();
         let mut normals = Vec::new();
         let mut uvs = Vec::new();
@@ -45,12 +69,17 @@ impl From<Planet> for Mesh {
         for direction in Direction::into_enum_iter() {
            add_face(&mut positions, &mut normals,&mut uvs, &mut indices, &resolution, radius, &direction.normal_vector());
         }
-        println!("{:?}", positions);
-        let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
         mesh.set_indices(Some(Indices::U32(indices)));
         mesh.set_attribute(Mesh::ATTRIBUTE_POSITION, positions);
         mesh.set_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
         mesh.set_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    }
+}
+
+impl From<Planet> for Mesh {
+    fn from(planet: Planet) -> Self {
+        let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+        planet.update(&mut mesh);
         mesh
     }
 }
@@ -63,7 +92,6 @@ fn add_face(positions: &mut Vec<[f32; 3]>
     , length: &f32
     , local_up: &Vec3) {
     let sub = length / *resolution as f32;
-    println!("{} / {} = {}", length, resolution, sub);
     let axis_a = Vec3::new(local_up.y, local_up.z, local_up.x);
     let axis_b = local_up.cross(axis_a);
     let res = *resolution;

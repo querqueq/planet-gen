@@ -5,7 +5,7 @@ use bevy::{
     prelude::*,
     render::{options::WgpuOptions, render_resource::WgpuFeatures, mesh::VertexAttributeValues}, utils::tracing::span::Attributes,
 };
-use planet::Planet;
+use planet::{Planet, PlanetPlugin};
 use smooth_bevy_cameras::{
     controllers::orbit::{OrbitCameraBundle, OrbitCameraController, OrbitCameraPlugin},
     LookTransformPlugin,
@@ -23,6 +23,11 @@ struct Noisify {
     max: f32,
 }
 
+#[derive(Component, Inspectable)]
+struct Wireframed {
+    wireframe: bool
+}
+
 fn main() {
     App::new()
         .insert_resource(Msaa { samples: 4 })
@@ -35,11 +40,14 @@ fn main() {
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(OrbitCameraPlugin::default())
         .add_plugin(WireframePlugin)
+        .add_plugin(PlanetPlugin)
         .add_startup_system(setup)
         .add_system(rotator_system)
+        .add_system(wireframe_system)
         //.add_system(noise_system)
         .register_inspectable::<Noisify>()
         .register_inspectable::<Rotator>()
+        .register_inspectable::<Wireframed>()
         .run();
 }
 
@@ -59,14 +67,6 @@ fn setup(
 
     let radius = 1.0;
     let gap = radius * 2.;
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(Planet { radius: radius, resolution: 2 })),
-        material: materials.add(Color::rgb(0.8, 0.1, 0.3).into()),
-        transform: Transform::from_xyz(-gap, 2., -gap),
-        ..Default::default()
-    })
-    .insert(Rotator { rotate: true })
-    ;
 
     commands.spawn_bundle(PbrBundle {
         mesh: meshes.add(Mesh::from(Planet { radius: radius, resolution: 3 })),
@@ -74,18 +74,10 @@ fn setup(
         transform: Transform::from_xyz(0.0, 2., 0.0),
         ..Default::default()
     })
+    .insert(Planet { radius: radius, resolution: 3 })
     .insert(Rotator { rotate: true })
+    .insert(Wireframed { wireframe: true })
     ;
-
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(Planet { radius: radius, resolution: 4 })),
-        material: materials.add(Color::rgb(0.3, 0.7, 0.3).into()),
-        transform: Transform::from_xyz(gap, 2., gap),
-        ..Default::default()
-    })
-    .insert(Rotator { rotate: true })
-    ;
-    
 
     // light
     commands.spawn_bundle(PointLightBundle {
@@ -110,6 +102,17 @@ fn rotator_system(time: Res<Time>, mut query: Query<(&Rotator, &mut Transform)>)
     for (Rotator { rotate, ..}, mut transform) in query.iter_mut() {
         if *rotate {
             transform.rotation *= Quat::from_rotation_y(0.5  * time.delta_seconds());
+        }
+    }
+}
+
+fn wireframe_system(mut commands: Commands, mut query: Query<(Entity, &Wireframed), (Changed<Wireframed>, With<Handle<Mesh>>)>) {
+    for (entity_id, Wireframed { wireframe }) in query.iter() {
+        let mut entity = commands.entity(entity_id);
+        if *wireframe {
+            entity.insert(Wireframe);
+        } else {
+            entity.remove::<Wireframe>();
         }
     }
 }
