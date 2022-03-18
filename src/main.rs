@@ -12,8 +12,10 @@ use smooth_bevy_cameras::{
 };
 use bevy_inspector_egui::{WorldInspectorPlugin, Inspectable, RegisterInspectable};
 
-#[derive(Component)]
-struct Rotator;
+#[derive(Component, Inspectable)]
+struct Rotator {
+    rotate: bool
+}
 
 #[derive(Component, Inspectable)]
 struct Noisify {
@@ -37,6 +39,7 @@ fn main() {
         .add_system(rotator_system)
         //.add_system(noise_system)
         .register_inspectable::<Noisify>()
+        .register_inspectable::<Rotator>()
         .run();
 }
 
@@ -49,12 +52,39 @@ fn setup(
     wireframe_config.global = false;
 
     commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(Planet { radius: 2.0, resolution: 5 })),
+        mesh: meshes.add(Mesh::from(shape::Plane { size: 30.0 })),
         material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
         ..Default::default()
+    });
+
+    let radius = 2.0;
+    commands.spawn_bundle(PbrBundle {
+        mesh: meshes.add(Mesh::from(Planet { radius: radius, resolution: 2 })),
+        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+        transform: Transform::from_xyz(-4.0, 2., -4.0),
+        ..Default::default()
     })
-    .insert(Rotator)
-    .insert(Wireframe);
+    .insert(Rotator { rotate: true })
+    ;
+
+    commands.spawn_bundle(PbrBundle {
+        mesh: meshes.add(Mesh::from(Planet { radius: radius, resolution: 3 })),
+        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+        transform: Transform::from_xyz(0.0, 2., 0.0),
+        ..Default::default()
+    })
+    .insert(Rotator { rotate: true })
+    ;
+
+    commands.spawn_bundle(PbrBundle {
+        mesh: meshes.add(Mesh::from(Planet { radius: radius, resolution: 4 })),
+        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+        transform: Transform::from_xyz(4.0, 2., 4.0),
+        ..Default::default()
+    })
+    .insert(Rotator { rotate: true })
+    ;
+    
 
     // light
     commands.spawn_bundle(PointLightBundle {
@@ -75,8 +105,10 @@ fn setup(
     ));
 }
 
-fn rotator_system(time: Res<Time>, mut query: Query<&mut Transform, With<Rotator>>) {
-    for mut transform in query.iter_mut() {
-        transform.rotation *= Quat::from_rotation_y(0.5  * time.delta_seconds());
+fn rotator_system(time: Res<Time>, mut query: Query<(&Rotator, &mut Transform)>) {
+    for (Rotator { rotate, ..}, mut transform) in query.iter_mut() {
+        if *rotate {
+            transform.rotation *= Quat::from_rotation_y(0.5  * time.delta_seconds());
+        }
     }
 }
