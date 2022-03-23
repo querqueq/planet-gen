@@ -5,12 +5,20 @@ use bevy::{
     prelude::*,
     render::{options::WgpuOptions, render_resource::WgpuFeatures, mesh::VertexAttributeValues}, utils::tracing::span::Attributes,
 };
-use planet::{Planet, PlanetPlugin};
+use planet::PlanetPlugin;
 use smooth_bevy_cameras::{
     controllers::orbit::{OrbitCameraBundle, OrbitCameraController, OrbitCameraPlugin},
     LookTransformPlugin,
 };
-use bevy_inspector_egui::{WorldInspectorPlugin, Inspectable, RegisterInspectable};
+use bevy_inspector_egui::{Inspectable, RegisterInspectable};
+
+//TODO put all settings for planet in its own data thingy
+//     can use a vec of stuff and press add and remove in egui
+//     could use that for the noise layers
+//     can use a enum to pick a specific noise function
+//     can send an event with InspectableButton to save settings
+//     should implement Default to get initial values for noise layer (maybe load last saved)
+//     should provide access to ambient light ResourceInspector<AmbientLight>
 
 #[derive(Component, Inspectable)]
 struct Rotator {
@@ -37,7 +45,7 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(LookTransformPlugin)
-        .add_plugin(WorldInspectorPlugin::new())
+        //.add_plugin(WorldInspectorPlugin::new())
         .add_plugin(OrbitCameraPlugin::default())
         .add_plugin(WireframePlugin)
         .add_plugin(PlanetPlugin)
@@ -67,9 +75,9 @@ fn setup(
         visibility: Visibility { is_visible: false },
         ..Default::default()
     });
-
-    let radius = 2.0;
-    let resolution = 1;
+/* 
+    let radius = 5.0;
+    let resolution = 60;
     let material_handle = materials.add(StandardMaterial {
         base_color: Color::rgba(0.4, 0.3, 0.8, 1.),
         reflectance: 0.,
@@ -83,11 +91,11 @@ fn setup(
         transform: Transform::from_xyz(0.0, 2., 0.0),
         ..Default::default()
     })
-    .insert(Planet { radius: radius, resolution: resolution })
+    .insert(Planet { radius: radius, resolution: resolution, noise: None })
     .insert(Rotator { rotate: true })
     .insert(Wireframed { wireframe: false })
     ;
-
+*/
     // light
     commands.spawn_bundle(PointLightBundle {
         point_light: PointLight {
